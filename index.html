@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>My Love</title>
   <style>
     body {
@@ -12,18 +12,20 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      height: 100vh;
+      justify-content: flex-start;
+      min-height: 100vh;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       text-align: center;
+      overflow-x: hidden;
     }
 
     h1 {
       color: white;
       font-size: 4rem;
       text-shadow: 2px 2px 10px rgba(255, 105, 180, 0.6);
-      margin: 0;
+      margin-top: 50px;
       animation: fadeSlide 2s ease-out, heartbeat 1.5s infinite ease-in-out;
+      z-index: 1;
     }
 
     p {
@@ -31,6 +33,14 @@
       font-size: 1.5rem;
       color: white;
       text-shadow: 1px 1px 5px rgba(255, 105, 180, 0.5);
+      z-index: 1;
+    }
+
+    #countdownTimer {
+      font-size: 1.3rem;
+      margin-top: 10px;
+      color: #fff5f8;
+      text-shadow: 1px 1px 6px rgba(255, 105, 180, 0.5);
     }
 
     @keyframes fadeSlide {
@@ -52,26 +62,164 @@
         transform: scale(1.1);
       }
     }
+
+    .hearts-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .heart {
+      position: absolute;
+      width: 15px;
+      height: 15px;
+      background: pink;
+      transform: rotate(45deg);
+      animation: float 10s linear infinite;
+      opacity: 0.7;
+    }
+
+    .heart::before,
+    .heart::after {
+      content: '';
+      position: absolute;
+      width: 15px;
+      height: 15px;
+      background: pink;
+      border-radius: 50%;
+    }
+
+    .heart::before {
+      top: -7.5px;
+      left: 0;
+    }
+
+    .heart::after {
+      left: -7.5px;
+      top: 0;
+    }
+
+    @keyframes float {
+      0% {
+        transform: translateY(100vh) rotate(45deg);
+        opacity: 0;
+      }
+      50% {
+        opacity: 0.8;
+      }
+      100% {
+        transform: translateY(-10vh) rotate(45deg);
+        opacity: 0;
+      }
+    }
+
+    .gallery {
+      margin-top: 40px;
+      position: relative;
+      width: 90%;
+      max-width: 400px;
+    }
+
+    .gallery img {
+      width: 100%;
+      border-radius: 20px;
+      box-shadow: 0 8px 16px rgba(255, 105, 180, 0.3);
+      transition: opacity 0.5s ease;
+    }
+
+    .gallery .nav-button {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255, 182, 193, 0.8);
+      border: none;
+      border-radius: 50%;
+      padding: 10px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      color: white;
+    }
+
+    .gallery .prev {
+      left: -10px;
+    }
+
+    .gallery .next {
+      right: -10px;
+    }
   </style>
 </head>
 <body>
+  <div class="hearts-container"></div>
+
   <h1>My love</h1>
   <p id="daysCounter"></p>
+  
+
+  <!-- Gallery -->
+  <div class="gallery">
+    <button class="nav-button prev" onclick="changeSlide(-1)">❮</button>
+    <img id="galleryImage" src="" alt="Photo">
+    <button class="nav-button next" onclick="changeSlide(1)">❯</button>
+  </div>
+  <p id="countdownTimer"></p>
 
   <script>
-    // Set the start date (YYYY-MM-DD)
+    // Days since meeting
     const startDate = new Date("2024-11-19");
     const today = new Date();
-
-    // Calculate time difference in milliseconds
     const timeDiff = today - startDate;
-
-    // Convert milliseconds to days
     const daysPassed = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
-
-    // Display result
     document.getElementById("daysCounter").textContent =
       `It's been ${daysPassed} day${daysPassed !== 1 ? 's' : ''} since we met.`;
+
+    // Countdown to special date
+    const futureDate = new Date("2025-11-19"); // your next special day
+    const timeLeft = futureDate - today;
+    const daysLeft = Math.ceil(timeLeft / (1000 * 60 * 60 * 24));
+    const countdownText = daysLeft > 0
+      ? `Only ${daysLeft} day${daysLeft !== 1 ? 's' : ''} until our special day! 💖`
+      : daysLeft === 0
+      ? "Today is our special day! 🎉"
+      : `Our special day was ${-daysLeft} day${-daysLeft !== 1 ? 's' : ''} ago. 💖`;
+    document.getElementById("countdownTimer").textContent = countdownText;
+
+    // Floating hearts
+    const heartsContainer = document.querySelector('.hearts-container');
+    function createHeart() {
+      const heart = document.createElement('div');
+      heart.classList.add('heart');
+      heart.style.left = `${Math.random() * 100}vw`;
+      heart.style.animationDuration = `${5 + Math.random() * 5}s`;
+      heart.style.transform = `rotate(45deg) scale(${0.8 + Math.random() * 0.5})`;
+      heartsContainer.appendChild(heart);
+      setTimeout(() => heart.remove(), 10000);
+    }
+    setInterval(createHeart, 500);
+
+    // Photo Slideshow
+    const imageUrls = [
+     "IMG_4393.HEIC",
+     "IMG_4398.HEIC",
+     "IMG_4399.HEIC"
+];
+    let currentIndex = 0;
+    const galleryImage = document.getElementById("galleryImage");
+    galleryImage.src = imageUrls[currentIndex]; // show first image on load
+
+    function changeSlide(direction) {
+      currentIndex = (currentIndex + direction + imageUrls.length) % imageUrls.length;
+      galleryImage.src = imageUrls[currentIndex];
+    }
   </script>
 </body>
 </html>
+
+
+
+
