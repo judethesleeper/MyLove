@@ -171,7 +171,7 @@
 
   <script>
     // Days since meeting
-    const startDate = new Date("2024-11-19");
+    const startDate = new Date("2025-01-01");
     const today = new Date();
     const timeDiff = today - startDate;
     const daysPassed = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
@@ -179,7 +179,7 @@
       `It's been ${daysPassed} day${daysPassed !== 1 ? 's' : ''} since we met.`;
 
     // Countdown to special date
-    const futureDate = new Date("2025-05-29"); // your next special day
+    const futureDate = new Date("2026-01-01"); // your next special day
     const timeLeft = futureDate - today;
     const daysLeft = Math.ceil(timeLeft / (1000 * 60 * 60 * 24));
     const countdownText = daysLeft > 0
