@@ -1,0 +1,405 @@
+:root {
+  --bg-1: #170913;
+  --bg-2: #351126;
+  --panel: rgba(255, 244, 249, 0.1);
+  --panel-strong: rgba(255, 248, 251, 0.14);
+  --text: #fff6fb;
+  --muted: #f1cfe0;
+  --accent: #ff73aa;
+  --accent-strong: #d94881;
+  --line: rgba(255, 255, 255, 0.14);
+  --shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--text);
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(255, 115, 170, 0.22), transparent 30%),
+    radial-gradient(circle at bottom right, rgba(255, 210, 230, 0.14), transparent 26%),
+    linear-gradient(180deg, var(--bg-2), var(--bg-1));
+}
+
+.page {
+  width: min(1180px, calc(100% - 1.5rem));
+  margin: 0 auto;
+  padding: 1.25rem 0 2.5rem;
+}
+
+.topbar,
+.hero,
+.room-layout,
+.final-actions,
+.action-row,
+.round-grid,
+.shot-pair {
+  display: flex;
+}
+
+.topbar,
+.hero,
+.room-layout,
+.round-grid {
+  gap: 1rem;
+}
+
+.topbar {
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.card,
+.panel {
+  border-radius: 2rem;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  backdrop-filter: blur(16px);
+  box-shadow: var(--shadow);
+}
+
+.hero {
+  align-items: stretch;
+}
+
+.hero-copy,
+.hero-actions-card,
+.room-main,
+.room-side {
+  flex: 1;
+}
+
+.hero-copy {
+  padding: 1.5rem;
+}
+
+.hero-actions-card {
+  max-width: 400px;
+  padding: 1.4rem;
+  background: var(--panel-strong);
+}
+
+.eyebrow,
+.chip,
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--muted);
+  text-decoration: none;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+}
+
+h1,
+h2 {
+  font-family: "Brush Script MT", "Snell Roundhand", cursive;
+  font-weight: 400;
+  color: #fff4f9;
+}
+
+h1 {
+  margin-top: 0.8rem;
+  font-size: clamp(3.2rem, 8vw, 5.8rem);
+  line-height: 0.95;
+}
+
+h2 {
+  font-size: clamp(2.5rem, 6vw, 4rem);
+}
+
+.lead,
+.body-copy,
+.fine-print,
+.list,
+.status-text,
+.helper {
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+.lead {
+  max-width: 39rem;
+  font-size: 1.06rem;
+}
+
+.helper {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 1.2rem;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.action-row {
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+button,
+.button-link,
+input,
+label.file-like {
+  font: inherit;
+}
+
+button,
+.button-link {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.95rem 1.25rem;
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: 700;
+  color: #2f0d20;
+  background: linear-gradient(135deg, #ffd6e7, var(--accent));
+  box-shadow: 0 14px 28px rgba(217, 72, 129, 0.24);
+}
+
+button.secondary,
+.button-link.secondary,
+label.file-like {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--line);
+  box-shadow: none;
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.hero-list,
+.list {
+  padding-left: 1.1rem;
+}
+
+.hero-list li,
+.list li {
+  margin-top: 0.35rem;
+}
+
+.field-row {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+.field label {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--muted);
+}
+
+.field input {
+  width: 100%;
+  padding: 0.95rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+}
+
+.room-layout {
+  align-items: flex-start;
+}
+
+.room-main {
+  padding: 1rem;
+}
+
+.room-side {
+  max-width: 420px;
+  padding: 1rem;
+}
+
+.room-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+.meta-box {
+  padding: 0.9rem;
+  border-radius: 1.2rem;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.meta-label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.meta-value {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.camera-stage {
+  position: relative;
+  overflow: hidden;
+  margin-top: 1rem;
+  border-radius: 1.5rem;
+  background: #1a0912;
+  aspect-ratio: 4 / 5;
+}
+
+#cameraPreview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transform: scaleX(-1);
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.countdown {
+  font-size: clamp(4rem, 16vw, 7rem);
+  font-weight: 800;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.countdown.show {
+  opacity: 1;
+}
+
+.flash {
+  position: absolute;
+  inset: 0;
+  background: white;
+  opacity: 0;
+}
+
+.flash.active {
+  animation: flashFrame 0.35s ease;
+}
+
+.status-box,
+.pair-card,
+.round-card {
+  padding: 1rem;
+  border-radius: 1.35rem;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.round-grid {
+  flex-direction: column;
+  margin-top: 1rem;
+}
+
+.round-card {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.round-title {
+  font-weight: 700;
+}
+
+.shot-pair {
+  gap: 0.75rem;
+}
+
+.shot-box {
+  flex: 1;
+  min-height: 160px;
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--muted);
+  padding: 0.75rem;
+}
+
+.shot-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.room-link {
+  word-break: break-all;
+}
+
+.final-strip-preview {
+  margin-top: 1rem;
+  width: 100%;
+  border-radius: 1.2rem;
+  display: none;
+}
+
+.final-strip-preview.show {
+  display: block;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.hidden-canvas {
+  display: none;
+}
+
+@keyframes flashFrame {
+  0% { opacity: 0; }
+  35% { opacity: 0.95; }
+  100% { opacity: 0; }
+}
+
+@media (max-width: 920px) {
+  .hero,
+  .room-layout {
+    flex-direction: column;
+  }
+
+  .hero-actions-card,
+  .room-side {
+    max-width: none;
+  }
+}
+
+@media (max-width: 700px) {
+  .room-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .shot-pair,
+  .topbar {
+    flex-direction: column;
+  }
+}

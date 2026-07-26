@@ -1,0 +1,380 @@
+:root {
+  --bg-top: #2f1430;
+  --bg-bottom: #120712;
+  --panel: rgba(255, 245, 249, 0.12);
+  --text: #fff7fb;
+  --muted: #f4cfe0;
+  --accent: #ff6fa8;
+  --accent-2: #ffd6e7;
+  --shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
+  --strip-text: #6b3352;
+  --strip-accent: #c7487d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(circle at top left, rgba(255, 111, 168, 0.22), transparent 25%),
+    radial-gradient(circle at top right, rgba(255, 214, 231, 0.14), transparent 20%),
+    linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
+  overflow-x: hidden;
+}
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  width: 18rem;
+  height: 18rem;
+  border-radius: 50%;
+  filter: blur(24px);
+  pointer-events: none;
+  opacity: 0.45;
+  z-index: 0;
+}
+
+body::before {
+  top: -6rem;
+  left: -4rem;
+  background: rgba(255, 111, 168, 0.35);
+}
+
+body::after {
+  right: -5rem;
+  bottom: -5rem;
+  background: rgba(255, 214, 231, 0.18);
+}
+
+.page {
+  position: relative;
+  z-index: 1;
+  width: min(1180px, calc(100% - 1.5rem));
+  margin: 0 auto;
+  padding: 1.2rem 0 2.5rem;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.back-link,
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 999px;
+  text-decoration: none;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 1.2rem;
+  align-items: start;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 2rem;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(16px);
+}
+
+.camera-panel,
+.strip-panel {
+  padding: 1.1rem;
+}
+
+.eyebrow {
+  display: inline-block;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+}
+
+h1 {
+  margin: 0.85rem 0 0;
+  font-family: "Brush Script MT", "Snell Roundhand", cursive;
+  font-size: clamp(3.4rem, 8vw, 5.8rem);
+  line-height: 0.95;
+  font-weight: 400;
+  color: #fff2f7;
+}
+
+.lead {
+  margin: 0.7rem 0 1rem;
+  max-width: 38rem;
+  color: var(--muted);
+  line-height: 1.8;
+  font-size: 1.02rem;
+}
+
+.helper {
+  margin: 0.8rem 0 0;
+  padding: 0.9rem 1rem;
+  border-radius: 1.1rem;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.camera-stage {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.6rem;
+  background: #190c18;
+  aspect-ratio: 4 / 5;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+video,
+.capture-canvas {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+#video {
+  transform: scaleX(-1);
+}
+
+.capture-canvas {
+  display: none;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.countdown {
+  font-size: clamp(4rem, 16vw, 7rem);
+  font-weight: 800;
+  color: white;
+  text-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.countdown.show {
+  opacity: 1;
+}
+
+.flash {
+  position: absolute;
+  inset: 0;
+  background: white;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.flash.active {
+  animation: flashFrame 0.35s ease;
+}
+
+.controls,
+.bottom-actions,
+.slot-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+.controls {
+  margin-top: 1rem;
+}
+
+button,
+.file-button {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.95rem 1.25rem;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  color: #2b1022;
+  background: linear-gradient(135deg, var(--accent-2), var(--accent));
+  box-shadow: 0 14px 28px rgba(255, 111, 168, 0.28);
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  text-decoration: none;
+}
+
+button.secondary,
+.file-button.secondary {
+  background: #fff0f6;
+  color: #a43767;
+  box-shadow: 0 10px 20px rgba(199, 72, 125, 0.14);
+  border: 1px solid rgba(199, 72, 125, 0.24);
+}
+
+button.slot-button {
+  padding: 0.75rem 1rem;
+  font-size: 0.92rem;
+  min-width: 7rem;
+}
+
+button:disabled {
+  opacity: 0.72;
+  cursor: not-allowed;
+  transform: none;
+}
+
+button.secondary:disabled,
+.file-button.secondary:disabled {
+  background: #ffe7f1;
+  color: #c88aa7;
+  border-color: rgba(199, 72, 125, 0.16);
+}
+
+button:hover:not(:disabled),
+.file-button:hover {
+  transform: translateY(-2px);
+}
+
+.status {
+  margin-top: 0.9rem;
+  min-height: 1.5rem;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.tips {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+.tip {
+  padding: 0.9rem;
+  border-radius: 1.2rem;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--muted);
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+.strip-panel {
+  position: sticky;
+  top: 1rem;
+}
+
+.strip-shell {
+  padding: 1rem;
+  border-radius: 1.6rem;
+  background: linear-gradient(180deg, #fff9fc, #ffeef5);
+  color: var(--strip-text);
+}
+
+.strip-title {
+  text-align: center;
+  font-family: "Brush Script MT", "Snell Roundhand", cursive;
+  font-size: 2.2rem;
+  color: var(--strip-accent);
+  margin-bottom: 0.55rem;
+}
+
+.strip-grid {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.shot {
+  aspect-ratio: 4 / 5;
+  border-radius: 1.2rem;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(255, 179, 208, 0.25), rgba(255, 224, 238, 0.9));
+  border: 1px dashed rgba(199, 72, 125, 0.32);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 1rem;
+  color: #b4688d;
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+.shot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.strip-note {
+  margin-top: 0.8rem;
+  text-align: center;
+  color: #9a5a7a;
+  line-height: 1.7;
+  font-size: 0.95rem;
+}
+
+.bottom-actions {
+  margin-top: 1rem;
+}
+
+.slot-actions {
+  margin-top: 0.8rem;
+  justify-content: center;
+  row-gap: 0.7rem;
+}
+
+.hidden-canvas,
+.hidden-input {
+  display: none;
+}
+
+@keyframes flashFrame {
+  0% { opacity: 0; }
+  35% { opacity: 0.95; }
+  100% { opacity: 0; }
+}
+
+@media (max-width: 920px) {
+  .hero {
+    grid-template-columns: 1fr;
+  }
+
+  .strip-panel {
+    position: static;
+  }
+}
+
+@media (max-width: 680px) {
+  .tips {
+    grid-template-columns: 1fr;
+  }
+
+  .topbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

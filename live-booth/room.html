@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Live Booth Room</title>
+  <link rel="stylesheet" href="../assets/css/live-booth.css" />
+</head>
+<body>
+  <main class="page">
+    <div class="topbar">
+      <a class="back-link" href="./index.html">← Back to Live Booth Home</a>
+      <div class="chip" id="roomPhaseChip">Waiting room</div>
+    </div>
+
+    <section class="room-layout">
+      <div class="panel room-main">
+        <div class="eyebrow">Shared room</div>
+        <h2>Room <span id="roomCodeText">----</span></h2>
+        <p class="lead">
+          Start your camera, get ready with your partner, and work through four rounds together.
+          Each round makes one shared row in the final strip.
+        </p>
+
+        <div class="room-meta">
+          <div class="meta-box">
+            <span class="meta-label">You are</span>
+            <span class="meta-value" id="roleText">Host</span>
+          </div>
+          <div class="meta-box">
+            <span class="meta-label">Round</span>
+            <span class="meta-value" id="roundText">1 / 4</span>
+          </div>
+          <div class="meta-box">
+            <span class="meta-label">Partner</span>
+            <span class="meta-value" id="partnerStatusText">Waiting</span>
+          </div>
+        </div>
+
+        <div class="camera-stage">
+          <video id="cameraPreview" autoplay playsinline muted></video>
+          <div class="overlay">
+            <div id="countdownText" class="countdown">3</div>
+          </div>
+          <div id="flashFrame" class="flash"></div>
+        </div>
+
+        <div class="action-row">
+          <button id="startCameraBtn" type="button">Start camera</button>
+          <button id="readyBtn" class="secondary" type="button" disabled>I'm ready</button>
+          <button id="startRoundBtn" class="secondary" type="button" disabled>Start round</button>
+          <button id="copyLinkBtn" class="secondary" type="button">Copy invite link</button>
+        </div>
+
+        <div class="status-box">
+          <div class="status-text" id="roomStatus">
+            Set up Firebase, then open this page with a room code like room.html?room=LOVE4821&role=host.
+          </div>
+        </div>
+      </div>
+
+      <aside class="panel room-side">
+        <h3>Shared strip progress</h3>
+        <p class="body-copy room-link" id="inviteLinkText">Invite link will appear here.</p>
+
+        <div class="round-grid" id="roundGrid">
+          <div class="round-card" data-round="1">
+            <div class="round-title">Round 1</div>
+            <div class="shot-pair">
+              <div class="shot-box" data-shot="1-host">Host photo</div>
+              <div class="shot-box" data-shot="1-guest">Guest photo</div>
+            </div>
+          </div>
+          <div class="round-card" data-round="2">
+            <div class="round-title">Round 2</div>
+            <div class="shot-pair">
+              <div class="shot-box" data-shot="2-host">Host photo</div>
+              <div class="shot-box" data-shot="2-guest">Guest photo</div>
+            </div>
+          </div>
+          <div class="round-card" data-round="3">
+            <div class="round-title">Round 3</div>
+            <div class="shot-pair">
+              <div class="shot-box" data-shot="3-host">Host photo</div>
+              <div class="shot-box" data-shot="3-guest">Guest photo</div>
+            </div>
+          </div>
+          <div class="round-card" data-round="4">
+            <div class="round-title">Round 4</div>
+            <div class="shot-pair">
+              <div class="shot-box" data-shot="4-host">Host photo</div>
+              <div class="shot-box" data-shot="4-guest">Guest photo</div>
+            </div>
+          </div>
+        </div>
+
+        <img id="finalStripPreview" class="final-strip-preview" alt="Final shared strip preview" />
+
+        <div class="final-actions action-row">
+          <button id="downloadStripBtn" type="button" disabled>Download strip</button>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <canvas id="captureCanvas" class="hidden-canvas"></canvas>
+  <canvas id="exportCanvas" class="hidden-canvas" width="1100" height="2500"></canvas>
+
+  <script type="module" src="../assets/js/live-booth-room.js"></script>
+</body>
+</html>
