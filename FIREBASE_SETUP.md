@@ -5,10 +5,10 @@ Use these steps for the free live booth version.
 ## What This Version Uses
 
 - `Firestore Database` for rooms and signaling
-- `WebRTC` for direct phone-to-phone photo sharing during the session
+- `Firestore Database` for rooms, countdowns, and temporary round photos
 - `No Firebase Storage`
 
-That means the photos are not meant to stay in backend storage. Both phones should download the final strip during the session if you want to keep it.
+That means the photos are only meant to stay in the session briefly. Both phones should download the final strip during the session if you want to keep it.
 
 ## 1. Create Firebase Project
 
@@ -56,15 +56,15 @@ Good options:
 
 1. Host creates a room
 2. Guest joins with a link
-3. Firestore helps both phones find each other
-4. WebRTC connects the phones directly
+3. Firestore keeps both phones in the same shared room
+4. Each round updates in that room for both phones
 5. Each round both phones take one shot
 6. The final strip is built during that session
 7. Both people download it to their phones
 
 ## 6. Important Limitation
 
-Because this version does not save photos in backend storage:
+Because this version does not use permanent storage:
 
 - if the connection breaks, photos may be lost from the session
 - if you want to keep the strip, download it before leaving

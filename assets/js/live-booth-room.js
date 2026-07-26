@@ -3,14 +3,13 @@ import {
   getRoom,
   joinRoom,
   subscribeToRoom,
+  subscribeToRound,
   setParticipantName,
   setReady,
   startRoundCountdown,
   advancePhase,
-  saveOffer,
-  saveAnswer,
-  addIceCandidate,
-  subscribeToIceCandidates
+  saveRoundImage,
+  clearRoomSession
 } from "./live-booth-firebase.js";
 
 const params = new URLSearchParams(window.location.search);
@@ -41,26 +40,28 @@ const exportContext = exportCanvas.getContext("2d");
 
 let roomState = null;
 let mediaStream = null;
-let connection = null;
-let dataChannel = null;
-let pendingRemoteCandidates = [];
-let addedRemoteCandidateKeys = new Set();
 let activeCountdownKey = null;
 let localShots = {};
-let partnerShots = {};
+let roundData = {
+  1: { hostImage: null, guestImage: null },
+  2: { hostImage: null, guestImage: null },
+  3: { hostImage: null, guestImage: null },
+  4: { hostImage: null, guestImage: null }
+};
 let finalStripDataUrl = null;
 let lastCompletedRound = 0;
+let subscriptions = [];
 
-function makeInviteLink() {
+function partnerRole() {
+  return role === "host" ? "guest" : "host";
+}
+
+function inviteLink() {
   const url = new URL(window.location.href);
   url.searchParams.set("room", roomId);
   url.searchParams.set("role", "guest");
   url.searchParams.set("name", "Partner");
   return url.toString();
-}
-
-function getPartnerRole() {
-  return role === "host" ? "guest" : "host";
 }
 
 function wait(ms) {
@@ -99,7 +100,7 @@ async function startCamera() {
     cameraPreview.srcObject = mediaStream;
     await cameraPreview.play();
     readyBtn.disabled = false;
-    setStatus("Camera ready. Press 'I'm ready' when both of you want to start the next round.");
+    setStatus("Camera ready. Press 'I'm ready' when both of you want the next shot.");
   } catch (error) {
     setStatus("Camera access failed. Open the site over https and allow camera access on this phone.");
   }
@@ -117,12 +118,13 @@ function captureCurrentFrame() {
   captureContext.restore();
 
   const scaledCanvas = document.createElement("canvas");
-  const scaledWidth = 720;
+  const scaledWidth = 480;
   const scaledHeight = Math.round((height / width) * scaledWidth);
   scaledCanvas.width = scaledWidth;
   scaledCanvas.height = scaledHeight;
-  scaledCanvas.getContext("2d").drawImage(captureCanvas, 0, 0, scaledWidth, scaledHeight);
-  return scaledCanvas.toDataURL("image/jpeg", 0.78);
+  const scaledContext = scaledCanvas.getContext("2d");
+  scaledContext.drawImage(captureCanvas, 0, 0, scaledWidth, scaledHeight);
+  return scaledCanvas.toDataURL("image/jpeg", 0.55);
 }
 
 function renderShotBox(roundNumber, side, src, label) {
@@ -145,159 +147,39 @@ function renderShotBox(roundNumber, side, src, label) {
 
 function renderRounds() {
   for (let round = 1; round <= 4; round += 1) {
-    renderShotBox(round, "host", role === "host" ? localShots[round] : partnerShots[round], "Host photo");
-    renderShotBox(round, "guest", role === "guest" ? localShots[round] : partnerShots[round], "Guest photo");
+    renderShotBox(round, "host", roundData[round]?.hostImage, "Host photo");
+    renderShotBox(round, "guest", roundData[round]?.guestImage, "Guest photo");
   }
-}
-
-function getConnectionStatus() {
-  if (dataChannel?.readyState === "open") {
-    return "Connected";
-  }
-  return "Waiting";
 }
 
 function updateControls() {
   const participants = roomState?.participants || {};
-  const partner = participants[getPartnerRole()] || {};
   const currentRound = roomState?.currentRound || 1;
-  const roomReadyForStart = Boolean(participants.host?.ready && participants.guest?.ready);
-  const inWaitingPhase = roomState?.phase === "waiting";
+  const partner = participants[partnerRole()] || {};
+  const me = participants[role] || {};
+  const bothReady = Boolean(participants.host?.ready && participants.guest?.ready);
+  const waitingPhase = roomState?.phase === "waiting";
 
   roleText.textContent = role === "host" ? "Host" : "Guest";
   roundText.textContent = `${currentRound} / 4`;
-  partnerStatusText.textContent = `${partner.name || "Partner"} • ${getConnectionStatus()}`;
+  partnerStatusText.textContent = partner.joined
+    ? `${partner.name || "Partner"} • ${partner.ready ? "Ready" : "Connected"}`
+    : "Waiting";
   roomPhaseChip.textContent = roomState?.phase || "waiting";
 
   readyBtn.disabled = !mediaStream || roomState?.phase === "complete";
-  readyBtn.textContent = participants[role]?.ready ? "Ready sent" : "I'm ready";
-  startRoundBtn.disabled = !(role === "host" && inWaitingPhase && roomReadyForStart && dataChannel?.readyState === "open");
+  readyBtn.textContent = me.ready ? "Ready sent" : "I'm ready";
+  startRoundBtn.disabled = !(role === "host" && waitingPhase && bothReady);
   downloadStripBtn.disabled = !finalStripDataUrl;
 }
 
 async function copyInviteLink() {
-  const link = makeInviteLink();
+  const link = inviteLink();
   try {
     await navigator.clipboard.writeText(link);
     setStatus("Invite link copied. Send it to your girlfriend.");
   } catch (error) {
     setStatus(`Copy this link manually: ${link}`);
-  }
-}
-
-function createPeerConnection() {
-  connection = new RTCPeerConnection({
-    iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
-  });
-
-  connection.onicecandidate = async (event) => {
-    if (!event.candidate) {
-      return;
-    }
-    try {
-      await addIceCandidate(roomId, role, event.candidate.toJSON());
-    } catch (error) {
-      setStatus("Could not send connection candidate.");
-    }
-  };
-
-  connection.ondatachannel = (event) => {
-    attachDataChannel(event.channel);
-  };
-}
-
-function attachDataChannel(channel) {
-  dataChannel = channel;
-  dataChannel.onopen = () => {
-    updateControls();
-    setStatus("Live phone-to-phone connection is ready. Photos stay on the devices during the session.");
-    sendMessage({ type: "hello", name: displayName });
-  };
-  dataChannel.onclose = () => {
-    updateControls();
-    setStatus("The live connection closed. Refresh and reconnect if needed.");
-  };
-  dataChannel.onmessage = (event) => {
-    handlePeerMessage(event.data);
-  };
-}
-
-function sendMessage(payload) {
-  if (dataChannel?.readyState !== "open") {
-    return;
-  }
-  dataChannel.send(JSON.stringify(payload));
-}
-
-async function initializeHostConnection() {
-  createPeerConnection();
-  attachDataChannel(connection.createDataChannel("booth"));
-  const offer = await connection.createOffer();
-  await connection.setLocalDescription(offer);
-  await saveOffer(roomId, offer.toJSON());
-}
-
-async function initializeGuestConnection(offerData) {
-  createPeerConnection();
-  await connection.setRemoteDescription(new RTCSessionDescription(offerData));
-  const answer = await connection.createAnswer();
-  await connection.setLocalDescription(answer);
-  await saveAnswer(roomId, answer.toJSON());
-  flushPendingCandidates();
-}
-
-async function applyAnswer(answerData) {
-  if (!connection?.currentRemoteDescription) {
-    await connection.setRemoteDescription(new RTCSessionDescription(answerData));
-    flushPendingCandidates();
-  }
-}
-
-async function addRemoteCandidate(candidateData) {
-  const key = JSON.stringify(candidateData);
-  if (addedRemoteCandidateKeys.has(key)) {
-    return;
-  }
-  addedRemoteCandidateKeys.add(key);
-
-  const candidate = new RTCIceCandidate(candidateData);
-  if (!connection || !connection.remoteDescription) {
-    pendingRemoteCandidates.push(candidate);
-    return;
-  }
-  await connection.addIceCandidate(candidate);
-}
-
-function flushPendingCandidates() {
-  if (!connection?.remoteDescription) {
-    return;
-  }
-  pendingRemoteCandidates.forEach((candidate) => {
-    connection.addIceCandidate(candidate).catch(() => {});
-  });
-  pendingRemoteCandidates = [];
-}
-
-function handlePeerMessage(rawMessage) {
-  const message = JSON.parse(rawMessage);
-  if (message.type === "hello") {
-    setStatus(`${message.name || "Partner"} is connected. You can start when both of you are ready.`);
-    return;
-  }
-
-  if (message.type === "shot") {
-    partnerShots[message.round] = message.image;
-    renderRounds();
-    maybeFinishRound(message.round);
-    return;
-  }
-
-  if (message.type === "complete") {
-    finalStripPreview.src = message.strip;
-    finalStripPreview.classList.add("show");
-    finalStripDataUrl = message.strip;
-    updateControls();
-    setStatus("Shared strip is ready. Download it to your phone.");
   }
 }
 
@@ -310,29 +192,30 @@ async function captureRound(roundNumber) {
   await wait(120);
   const image = captureCurrentFrame();
   localShots[roundNumber] = image;
-  renderRounds();
-  sendMessage({ type: "shot", round: roundNumber, image });
-  maybeFinishRound(roundNumber);
+  await saveRoundImage(roomId, roundNumber, role, image);
+  setStatus("Your photo is saved for this round. Waiting for the other phone.");
 }
 
-function maybeFinishRound(roundNumber) {
-  if (!localShots[roundNumber] || !partnerShots[roundNumber] || lastCompletedRound >= roundNumber) {
+function roundComplete(roundNumber) {
+  const current = roundData[roundNumber];
+  return Boolean(current?.hostImage && current?.guestImage);
+}
+
+async function maybeAdvanceRound(roundNumber) {
+  if (roundNumber <= lastCompletedRound || !roundComplete(roundNumber) || role !== "host") {
     return;
   }
 
   lastCompletedRound = roundNumber;
-  if (role === "host") {
-    if (roundNumber < 4) {
-      advancePhase(roomId, "waiting", roundNumber + 1).catch(() => {});
-      setStatus(`Round ${roundNumber} is done. Get ready for round ${roundNumber + 1}.`);
-    } else {
-      buildAndShareFinalStrip().catch(() => {
-        setStatus("The strip could not be built.");
-      });
-    }
-  } else {
-    setStatus(`Round ${roundNumber} is done. Waiting for the host to move to the next step.`);
+  if (roundNumber < 4) {
+    await advancePhase(roomId, "waiting", roundNumber + 1);
+    setStatus(`Round ${roundNumber} is done. Get ready for round ${roundNumber + 1}.`);
+    return;
   }
+
+  await buildFinalStrip();
+  await advancePhase(roomId, "complete", 4);
+  setStatus("Final strip is ready. Download it to your phones now.");
 }
 
 async function runCountdownIfNeeded(currentRoom) {
@@ -353,6 +236,7 @@ async function runCountdownIfNeeded(currentRoom) {
     setCountdownValue(String(number));
     await wait(1000);
   }
+
   clearCountdown();
   await captureRound(currentRound);
 }
@@ -380,7 +264,7 @@ function drawRoundedRect(ctx, x, y, width, height, radius) {
   ctx.closePath();
 }
 
-async function buildAndShareFinalStrip() {
+async function buildFinalStrip() {
   exportContext.fillStyle = "#fff8fb";
   exportContext.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
   exportContext.fillStyle = "#d94881";
@@ -395,12 +279,10 @@ async function buildAndShareFinalStrip() {
   const gapY = 40;
   const innerGap = 24;
   const photoWidth = (cardWidth - innerGap) / 2;
-  const hostImages = role === "host" ? localShots : partnerShots;
-  const guestImages = role === "guest" ? localShots : partnerShots;
 
   for (let round = 1; round <= 4; round += 1) {
-    const hostImage = await loadImage(hostImages[round]);
-    const guestImage = await loadImage(guestImages[round]);
+    const hostImage = await loadImage(roundData[round].hostImage);
+    const guestImage = await loadImage(roundData[round].guestImage);
     const cardY = startY + (round - 1) * (cardHeight + gapY);
 
     exportContext.fillStyle = "#ffeaf3";
@@ -430,15 +312,12 @@ async function buildAndShareFinalStrip() {
   exportContext.fillStyle = "#a45b7b";
   exportContext.font = "34px sans-serif";
   exportContext.textAlign = "center";
-  exportContext.fillText("download to both phones after the session", exportCanvas.width / 2, 2440);
+  exportContext.fillText("download before leaving the room", exportCanvas.width / 2, 2440);
 
   finalStripDataUrl = exportCanvas.toDataURL("image/png");
   finalStripPreview.src = finalStripDataUrl;
   finalStripPreview.classList.add("show");
-  sendMessage({ type: "complete", strip: finalStripDataUrl });
-  await advancePhase(roomId, "complete", 4);
   updateControls();
-  setStatus("Final strip is ready. Download it now on both phones if you want to keep it.");
 }
 
 function renderRoom(currentRoom) {
@@ -449,40 +328,40 @@ function renderRoom(currentRoom) {
 
   roomState = currentRoom;
   roomCodeText.textContent = roomId;
-  inviteLinkText.textContent = makeInviteLink();
-  renderRounds();
+  inviteLinkText.textContent = inviteLink();
   updateControls();
 
-  const partner = currentRoom.participants?.[getPartnerRole()];
-  if (currentRoom.phase === "waiting" && dataChannel?.readyState !== "open") {
-    setStatus("Waiting for the phone-to-phone connection.");
-  } else if (currentRoom.phase === "waiting") {
+  const partner = currentRoom.participants?.[partnerRole()];
+  if (currentRoom.phase === "waiting") {
     setStatus(partner?.joined
-      ? "Both of you can press 'I'm ready'. The host starts the round when both are ready."
+      ? "Both phones are in the room. Press 'I'm ready' on both, then the host starts the round."
       : "Send the invite link and wait for your partner to join.");
   } else if (currentRoom.phase === "countdown") {
     setStatus("Countdown started for both phones.");
   } else if (currentRoom.phase === "complete" && finalStripDataUrl) {
-    setStatus("Final strip is ready. Download it now, because it is not stored in the backend.");
+    setStatus("Final strip is ready. Download it now on both phones.");
   }
 }
 
-async function initializeConnectionForRoom(currentRoom) {
-  if (role === "host") {
-    if (!connection) {
-      await initializeHostConnection();
-    }
-    if (currentRoom.answer && connection && !connection.currentRemoteDescription) {
-      await applyAnswer(currentRoom.answer);
-    }
-  } else if (currentRoom.offer && !connection) {
-    await initializeGuestConnection(currentRoom.offer);
+function subscribeToRounds() {
+  for (let round = 1; round <= 4; round += 1) {
+    const unsubscribe = subscribeToRound(roomId, round, async (data) => {
+      if (!data) {
+        return;
+      }
+      roundData[round] = data;
+      renderRounds();
+      if (roundComplete(round)) {
+        await maybeAdvanceRound(round);
+      }
+    });
+    subscriptions.push(unsubscribe);
   }
 }
 
 async function initializeRoom() {
   roomCodeText.textContent = roomId || "----";
-  inviteLinkText.textContent = makeInviteLink();
+  inviteLinkText.textContent = inviteLink();
 
   if (!firebaseReady()) {
     startCameraBtn.disabled = true;
@@ -509,16 +388,11 @@ async function initializeRoom() {
     }
 
     await setParticipantName(roomId, role, displayName);
-
-    subscribeToIceCandidates(roomId, getPartnerRole(), async (candidate) => {
-      await addRemoteCandidate(candidate);
-    });
-
-    subscribeToRoom(roomId, async (currentRoom) => {
+    subscribeToRounds();
+    subscriptions.push(subscribeToRoom(roomId, async (currentRoom) => {
       renderRoom(currentRoom);
-      await initializeConnectionForRoom(currentRoom);
       await runCountdownIfNeeded(currentRoom);
-    });
+    }));
   } catch (error) {
     setStatus(error.message || "Could not load room.");
   }
@@ -554,6 +428,10 @@ downloadStripBtn.addEventListener("click", () => {
   link.href = finalStripDataUrl;
   link.download = `${roomId.toLowerCase()}-live-booth-strip.png`;
   link.click();
+});
+
+window.addEventListener("beforeunload", () => {
+  subscriptions.forEach((unsubscribe) => unsubscribe());
 });
 
 initializeRoom();

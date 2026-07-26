@@ -12,7 +12,8 @@ import {
   collection,
   addDoc,
   query,
-  orderBy
+  orderBy,
+  deleteDoc
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 
 let app = null;
@@ -34,6 +35,11 @@ function roomRef(roomId) {
   return doc(db, "liveBoothRooms", roomId);
 }
 
+function roundRef(roomId, roundNumber) {
+  assertFirebase();
+  return doc(collection(roomRef(roomId), "rounds"), String(roundNumber));
+}
+
 export function firebaseReady() {
   return Boolean(app && db);
 }
@@ -45,15 +51,21 @@ export async function createRoom(roomId) {
     phase: "waiting",
     currentRound: 1,
     countdownStartsAt: null,
-    connectionReady: false,
-    offer: null,
-    answer: null,
     participants: {
       host: { joined: true, ready: false, name: "Host" },
       guest: { joined: false, ready: false, name: "Guest" }
     },
     updatedAt: serverTimestamp()
   });
+
+  for (let round = 1; round <= 4; round += 1) {
+    await setDoc(roundRef(roomId, round), {
+      round,
+      hostImage: null,
+      guestImage: null,
+      updatedAt: serverTimestamp()
+    });
+  }
 }
 
 export async function joinRoom(roomId) {
@@ -77,6 +89,12 @@ export async function getRoom(roomId) {
 
 export function subscribeToRoom(roomId, callback) {
   return onSnapshot(roomRef(roomId), (snapshot) => {
+    callback(snapshot.exists() ? snapshot.data() : null);
+  });
+}
+
+export function subscribeToRound(roomId, roundNumber, callback) {
+  return onSnapshot(roundRef(roomId, roundNumber), (snapshot) => {
     callback(snapshot.exists() ? snapshot.data() : null);
   });
 }
@@ -114,39 +132,30 @@ export async function advancePhase(roomId, phase, roundNumber) {
   });
 }
 
-export async function saveOffer(roomId, offer) {
-  await updateDoc(roomRef(roomId), {
-    offer,
+export async function saveRoundImage(roomId, roundNumber, role, imageData) {
+  const field = role === "host" ? "hostImage" : "guestImage";
+  await updateDoc(roundRef(roomId, roundNumber), {
+    [field]: imageData,
     updatedAt: serverTimestamp()
   });
 }
 
-export async function saveAnswer(roomId, answer) {
-  await updateDoc(roomRef(roomId), {
-    answer,
-    connectionReady: true,
-    updatedAt: serverTimestamp()
-  });
-}
-
-export async function addIceCandidate(roomId, role, candidate) {
-  await addDoc(collection(roomRef(roomId), `${role}Candidates`), {
-    candidate,
-    createdAt: serverTimestamp()
-  });
-}
-
-export function subscribeToIceCandidates(roomId, role, callback) {
-  const candidateQuery = query(
-    collection(roomRef(roomId), `${role}Candidates`),
-    orderBy("createdAt", "asc")
-  );
-
-  return onSnapshot(candidateQuery, (snapshot) => {
-    snapshot.docChanges().forEach((change) => {
-      if (change.type === "added") {
-        callback(change.doc.data().candidate);
-      }
+export async function clearRoomSession(roomId) {
+  for (let round = 1; round <= 4; round += 1) {
+    await setDoc(roundRef(roomId, round), {
+      round,
+      hostImage: null,
+      guestImage: null,
+      updatedAt: serverTimestamp()
     });
+  }
+
+  await updateDoc(roomRef(roomId), {
+    phase: "waiting",
+    currentRound: 1,
+    countdownStartsAt: null,
+    "participants.host.ready": false,
+    "participants.guest.ready": false,
+    updatedAt: serverTimestamp()
   });
 }
