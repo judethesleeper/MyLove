@@ -18,6 +18,14 @@ import { usePhotobooth } from "./photobooth-provider";
 
 type RoundMap = Record<number, LiveRoundData>;
 
+function emptyRound(round: number): LiveRoundData {
+  return {
+    round,
+    hostImage: null,
+    guestImage: null
+  };
+}
+
 export function LiveRoomStage() {
   const router = useRouter();
   const params = useSearchParams();
@@ -377,7 +385,7 @@ export function LiveRoomStage() {
           <h3 className="text-lg font-semibold text-roseInk">Shared strip progress</h3>
           <div className="mt-4 grid gap-4">
             {roundNumbers.map((roundNumber) => {
-              const round = rounds[roundNumber];
+              const round = rounds[roundNumber] ?? emptyRound(roundNumber);
               return (
                 <div key={roundNumber} className="rounded-[24px] border border-rose-100 bg-white/70 p-4">
                   <p className="mb-3 font-medium text-roseInk">Round {roundNumber}</p>
