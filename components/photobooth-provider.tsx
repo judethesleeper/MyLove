@@ -33,6 +33,7 @@ import {
 
 type Action =
   | { type: "hydrate"; payload: SessionState }
+  | { type: "import-session"; payload: SessionState }
   | { type: "set-template"; templateId: TemplateId }
   | { type: "add-photos"; photos: CapturedPhoto[] }
   | { type: "replace-photo"; photoId: string; dataUrl: string }
@@ -60,6 +61,8 @@ type Action =
 function reducer(state: SessionState, action: Action): SessionState {
   switch (action.type) {
     case "hydrate":
+      return action.payload;
+    case "import-session":
       return action.payload;
     case "set-template": {
       const placements = autoplacePhotos(state.placements, action.templateId, state.photos);
@@ -236,6 +239,7 @@ type PhotoboothContextValue = {
   dispatch: Dispatch<Action>;
   addCapturedPhoto: (dataUrl: string) => void;
   replaceCapturedPhoto: (photoId: string, dataUrl: string) => void;
+  importComposedStrip: (dataUrl: string, options?: { title?: string; message?: string }) => void;
   undo: () => void;
   redo: () => void;
   resetSession: () => void;
@@ -296,6 +300,39 @@ export function PhotoboothProvider({ children }: { children: React.ReactNode }) 
     [wrappedDispatch]
   );
 
+  const importComposedStrip = useCallback(
+    (dataUrl: string, options?: { title?: string; message?: string }) => {
+      pushHistory();
+      const photoId = createId("photo");
+      const importedState: SessionState = {
+        ...defaultSessionState(),
+        photos: [{ id: photoId, dataUrl, createdAt: Date.now() }],
+        templateId: "postcard",
+        placements: {
+          "slot-1": {
+            photoId,
+            zoom: 1,
+            offsetX: 0,
+            offsetY: 0,
+            rotation: 0,
+            filter: "original"
+          }
+        },
+        frame: {
+          ...defaultSessionState().frame,
+          title: options?.title ?? "Live Booth",
+          message: options?.message ?? "Edited after our live session"
+        },
+        selectedPhotoId: photoId,
+        selectedSlotId: "slot-1",
+        selectedStickerId: null,
+        lastSavedAt: Date.now()
+      };
+      dispatch({ type: "import-session", payload: importedState });
+    },
+    [pushHistory]
+  );
+
   const undo = useCallback(() => {
     const previous = historyRef.current.at(-1);
     if (!previous) {
@@ -348,11 +385,12 @@ export function PhotoboothProvider({ children }: { children: React.ReactNode }) 
       dispatch: wrappedDispatch,
       addCapturedPhoto,
       replaceCapturedPhoto,
+      importComposedStrip,
       undo,
       redo,
       resetSession
     }),
-    [state, wrappedDispatch, addCapturedPhoto, replaceCapturedPhoto, undo, redo, resetSession]
+    [state, wrappedDispatch, addCapturedPhoto, replaceCapturedPhoto, importComposedStrip, undo, redo, resetSession]
   );
 
   return <PhotoboothContext.Provider value={value}>{children}</PhotoboothContext.Provider>;

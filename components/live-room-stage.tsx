@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
-import { Copy, Download, LoaderCircle } from "lucide-react";
+import { Copy, Download, LoaderCircle, WandSparkles } from "lucide-react";
 import {
   advanceRoom,
   saveRoundImage,
@@ -12,6 +13,7 @@ import {
   subscribeToRound
 } from "@/lib/live-booth-service";
 import type { LiveRole, LiveRoom, LiveRoundData } from "@/types/live-booth";
+import { usePhotobooth } from "./photobooth-provider";
 
 type RoundMap = Record<number, LiveRoundData>;
 
@@ -23,7 +25,9 @@ const EMPTY_ROUNDS: RoundMap = {
 };
 
 export function LiveRoomStage() {
+  const router = useRouter();
   const params = useSearchParams();
+  const { importComposedStrip } = usePhotobooth();
   const roomId = (params.get("room") || "").toUpperCase();
   const role = (params.get("role") === "guest" ? "guest" : "host") as LiveRole;
   const displayName = params.get("name") || (role === "host" ? "Host" : "Guest");
@@ -287,6 +291,15 @@ export function LiveRoomStage() {
     link.click();
   };
 
+  const editStrip = () => {
+    if (!finalStrip) return;
+    importComposedStrip(finalStrip, {
+      title: `${roomId} Live Booth`,
+      message: "Edited after our live session"
+    });
+    router.push("/editor");
+  };
+
   const partner = room?.participants[partnerRole];
   const bothReady = Boolean(room?.participants.host.ready && room?.participants.guest.ready);
 
@@ -378,6 +391,10 @@ export function LiveRoomStage() {
               <button className="button-primary mt-4 gap-2" onClick={downloadStrip}>
                 <Download className="h-4 w-4" />
                 Download strip
+              </button>
+              <button className="button-secondary mt-3 gap-2" onClick={editStrip}>
+                <WandSparkles className="h-4 w-4" />
+                Edit in editor
               </button>
             </>
           ) : (
