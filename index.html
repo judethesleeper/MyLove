@@ -1,83 +1,105 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>My Love</title>
-  <link rel="stylesheet" href="assets/css/main.css" />
-</head>
-<body>
-  <div class="sparkles"></div>
-  <div class="hearts-layer" id="heartsLayer"></div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Love</title>
+    <link rel="stylesheet" href="assets/css/main.css" />
+  </head>
+  <body>
+    <div class="sparkles"></div>
+    <div class="hearts-layer" id="heartsLayer"></div>
 
-  <main class="page">
-    <section class="hero">
-      <div class="hero-card">
-        <div class="tiny-note">made with love</div>
-        <h1>My Love</h1>
-        <p class="hero-text">
-          For all the little moments, the soft smiles, the late-night thoughts, and the kind
-          of love that makes ordinary days feel warmer.
+    <main class="page">
+      <section class="hero">
+        <div class="hero-card">
+          <div class="tiny-note">made with love</div>
+          <h1>My Love</h1>
+          <p class="hero-text">
+            For all the little moments, the soft smiles, the late-night
+            thoughts, and the kind of love that makes ordinary days feel warmer.
+          </p>
+
+          <div class="hero-photo-wrap">
+            <img
+              class="hero-photo"
+              src="photo_3.jpeg"
+              alt="A sweet photo together"
+            />
+            <div class="love-tag left" id="sinceText"></div>
+            <div class="love-tag right" id="specialText"></div>
+          </div>
+
+          <div class="stats">
+            <div class="stat">
+              <span class="stat-label">Days with you</span>
+              <span class="stat-value" id="daysTogether">0</span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">Months of us</span>
+              <span class="stat-value" id="monthsTogether">0</span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">Until Jan 1</span>
+              <span class="stat-value" id="countdown">0 days</span>
+            </div>
+          </div>
+
+          <div class="action-row">
+            <a class="scroll-link" href="#gallery">Our memories</a>
+            <a class="scroll-link" href="https://my-love-x2ka.vercel.app/camera"
+              >Photo Booth</a
+            >
+            <a class="scroll-link" href="https://my-love-x2ka.vercel.app/live"
+              >Live Booth</a
+            >
+          </div>
+        </div>
+      </section>
+
+      <section class="love-section" id="gallery">
+        <h2>Our memories</h2>
+        <p class="section-text">
+          A little gallery of your favorite moments, with soft captions and
+          simple controls.
         </p>
 
-        <div class="hero-photo-wrap">
-          <img class="hero-photo" src="photo_3.jpeg" alt="A sweet photo together" />
-          <div class="love-tag left" id="sinceText"></div>
-          <div class="love-tag right" id="specialText"></div>
-        </div>
-
-        <div class="stats">
-          <div class="stat">
-            <span class="stat-label">Days with you</span>
-            <span class="stat-value" id="daysTogether">0</span>
+        <div class="gallery-shell">
+          <div class="gallery-frame">
+            <button
+              class="gallery-button prev"
+              type="button"
+              aria-label="Previous photo"
+            >
+              ‹
+            </button>
+            <img id="galleryImage" src="photo_3.jpeg" alt="Gallery photo" />
+            <button
+              class="gallery-button next"
+              type="button"
+              aria-label="Next photo"
+            >
+              ›
+            </button>
           </div>
-          <div class="stat">
-            <span class="stat-label">Months of us</span>
-            <span class="stat-value" id="monthsTogether">0</span>
-          </div>
-          <div class="stat">
-            <span class="stat-label">Until Jan 1</span>
-            <span class="stat-value" id="countdown">0 days</span>
-          </div>
+          <div class="gallery-caption" id="galleryCaption"></div>
+          <div class="gallery-dots" id="galleryDots"></div>
         </div>
+      </section>
 
-        <div class="action-row">
-          <a class="scroll-link" href="#gallery">Our memories</a>
-          <a class="scroll-link" href="http://localhost:3000/camera">Photo Booth</a>
-          <a class="scroll-link" href="http://localhost:3000/live">Live Booth</a>
+      <section class="love-section">
+        <h2>For you</h2>
+        <div class="letter">
+          I wanted this place to feel gentle. Something you can open and smile
+          at. Something that holds your photos, your time together, and a little
+          bit of your heart. If you want, we can keep growing it with your own
+          letter, music, timeline moments, and more pages.
         </div>
-      </div>
-    </section>
+      </section>
 
-    <section class="love-section" id="gallery">
-      <h2>Our memories</h2>
-      <p class="section-text">
-        A little gallery of your favorite moments, with soft captions and simple controls.
-      </p>
+      <div class="footer">A little page for a big feeling.</div>
+    </main>
 
-      <div class="gallery-shell">
-        <div class="gallery-frame">
-          <button class="gallery-button prev" type="button" aria-label="Previous photo">‹</button>
-          <img id="galleryImage" src="photo_3.jpeg" alt="Gallery photo" />
-          <button class="gallery-button next" type="button" aria-label="Next photo">›</button>
-        </div>
-        <div class="gallery-caption" id="galleryCaption"></div>
-        <div class="gallery-dots" id="galleryDots"></div>
-      </div>
-    </section>
-
-    <section class="love-section">
-      <h2>For you</h2>
-      <div class="letter">
-        I wanted this place to feel gentle. Something you can open and smile at. Something that
-        holds your photos, your time together, and a little bit of your heart. If you want, we
-        can keep growing it with your own letter, music, timeline moments, and more pages.
-      </div>
-    </section>
-
-    <div class="footer">A little page for a big feeling.</div>
-  </main>
-
-  <script src="assets/js/main.js"></script>
-</body>
+    <script src="assets/js/main.js"></script>
+  </body>
 </html>
