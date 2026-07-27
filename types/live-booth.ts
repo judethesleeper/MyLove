@@ -1,3 +1,5 @@
+import type { TemplateId } from "./photobooth";
+
 export type LiveRole = "host" | "guest";
 export type LivePhase = "waiting" | "countdown" | "complete";
 
@@ -15,6 +17,7 @@ export interface LiveRoundData {
 
 export interface LiveRoom {
   roomId: string;
+  templateId: TemplateId;
   phase: LivePhase;
   currentRound: number;
   countdownStartsAt: number | null;

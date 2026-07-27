@@ -13,16 +13,10 @@ import {
   subscribeToRound
 } from "@/lib/live-booth-service";
 import type { LiveRole, LiveRoom, LiveRoundData } from "@/types/live-booth";
+import { getTemplate } from "@/lib/photobooth-utils";
 import { usePhotobooth } from "./photobooth-provider";
 
 type RoundMap = Record<number, LiveRoundData>;
-
-const EMPTY_ROUNDS: RoundMap = {
-  1: { round: 1, hostImage: null, guestImage: null },
-  2: { round: 2, hostImage: null, guestImage: null },
-  3: { round: 3, hostImage: null, guestImage: null },
-  4: { round: 4, hostImage: null, guestImage: null }
-};
 
 export function LiveRoomStage() {
   const router = useRouter();
@@ -36,7 +30,7 @@ export function LiveRoomStage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const captureCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const [room, setRoom] = useState<LiveRoom | null>(null);
-  const [rounds, setRounds] = useState<RoundMap>(EMPTY_ROUNDS);
+  const [rounds, setRounds] = useState<RoundMap>({});
   const [status, setStatus] = useState("Loading room...");
   const [cameraReady, setCameraReady] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
@@ -45,8 +39,19 @@ export function LiveRoomStage() {
   const [finalStrip, setFinalStrip] = useState<string | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const handledRoundsRef = useRef<Set<number>>(new Set());
+  const activeTemplate = useMemo(() => getTemplate(room?.templateId ?? "strip4"), [room?.templateId]);
+  const roundNumbers = useMemo(
+    () => Array.from({ length: activeTemplate.slots.length }, (_, index) => index + 1),
+    [activeTemplate.slots.length]
+  );
+  const totalRounds = roundNumbers.length;
 
   useEffect(() => {
+    if (!roomId) {
+      setStatus("Missing room code.");
+      return;
+    }
+
     const unsubs = [
       subscribeToLiveRoom(roomId, (nextRoom) => {
         setRoom(nextRoom);
@@ -68,7 +73,7 @@ export function LiveRoomStage() {
           setStatus("Final strip is ready. Download it on both phones.");
         }
       }),
-      ...[1, 2, 3, 4].map((roundNumber) =>
+      ...roundNumbers.map((roundNumber) =>
         subscribeToRound(roomId, roundNumber, (round) => {
           if (!round) return;
           setRounds((current) => ({ ...current, [roundNumber]: round }));
@@ -79,7 +84,7 @@ export function LiveRoomStage() {
     return () => {
       unsubs.forEach((unsubscribe) => unsubscribe());
     };
-  }, [partnerRole, roomId]);
+  }, [partnerRole, roomId, roundNumbers]);
 
   useEffect(() => {
     if (!room || room.phase !== "countdown" || !room.countdownStartsAt) {
@@ -116,12 +121,12 @@ export function LiveRoomStage() {
     if (handledRoundsRef.current.has(currentRound)) return;
 
     handledRoundsRef.current.add(currentRound);
-    if (currentRound < 4) {
+    if (currentRound < totalRounds) {
       void advanceRoom(roomId, "waiting", currentRound + 1);
       return;
     }
     void buildFinalStrip();
-  }, [role, room, roomId, rounds]);
+  }, [role, room, roomId, rounds, totalRounds]);
 
   const startCamera = async () => {
     try {
@@ -199,7 +204,7 @@ export function LiveRoomStage() {
   const buildFinalStrip = async () => {
     const canvas = document.createElement("canvas");
     canvas.width = 1100;
-    canvas.height = 2500;
+    canvas.height = Math.round(canvas.width / activeTemplate.aspectRatio);
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
@@ -231,42 +236,54 @@ export function LiveRoomStage() {
       ctx.closePath();
     };
 
-    ctx.fillStyle = "#fff8fb";
+    ctx.fillStyle = "#ffe9f2";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "#d94881";
+    ctx.fillStyle = "#b34d7e";
     ctx.font = "76px cursive";
     ctx.textAlign = "center";
     ctx.fillText("Our Live Booth", canvas.width / 2, 120);
 
-    for (let round = 1; round <= 4; round += 1) {
+    ctx.fillStyle = "#d97aa5";
+    ctx.fillRect(canvas.width * 0.2, 156, canvas.width * 0.6, 12);
+
+    const contentTop = 220;
+    const contentBottom = 170;
+    const contentHeight = canvas.height - contentTop - contentBottom;
+
+    for (const [index, slot] of activeTemplate.slots.entries()) {
+      const round = index + 1;
       const data = rounds[round];
       if (!data.hostImage || !data.guestImage) return;
       const hostImage = await loadImage(data.hostImage);
       const guestImage = await loadImage(data.guestImage);
-      const cardX = 60;
-      const cardY = 180 + (round - 1) * 580;
-      const cardWidth = canvas.width - 120;
-      const cardHeight = 520;
-      const innerGap = 24;
-      const photoWidth = (cardWidth - 64 - innerGap) / 2;
-      const photoHeight = 408;
-      const photoY = cardY + 72;
+      const cardX = slot.x * canvas.width;
+      const cardY = contentTop + slot.y * contentHeight;
+      const cardWidth = slot.width * canvas.width;
+      const cardHeight = slot.height * contentHeight;
+      const radius = slot.radius ?? 24;
+      const innerPadding = Math.max(16, Math.min(cardWidth, cardHeight) * 0.06);
+      const innerGap = Math.max(10, innerPadding * 0.55);
+      const labelHeight = Math.max(18, Math.min(42, cardHeight * 0.18));
+      const photoAreaHeight = cardHeight - innerPadding * 2 - labelHeight;
+      const photoWidth = (cardWidth - innerPadding * 2 - innerGap) / 2;
+      const photoHeight = Math.max(40, photoAreaHeight);
+      const photoY = cardY + innerPadding + labelHeight;
 
-      ctx.fillStyle = "#ffeaf3";
-      drawRoundedRect(cardX, cardY, cardWidth, cardHeight, 30);
+      ctx.fillStyle = "#fff8fb";
+      drawRoundedRect(cardX, cardY, cardWidth, cardHeight, radius);
       ctx.fill();
       ctx.fillStyle = "#b9537f";
-      ctx.font = "30px sans-serif";
+      ctx.font = `${Math.max(18, Math.min(30, cardHeight * 0.14))}px sans-serif`;
       ctx.textAlign = "left";
-      ctx.fillText(`Round ${round}`, cardX + 24, cardY + 42);
+      ctx.fillText(`Round ${round}`, cardX + innerPadding, cardY + innerPadding + labelHeight * 0.7);
 
-      const leftX = cardX + 20;
+      const leftX = cardX + innerPadding;
       const rightX = leftX + photoWidth + innerGap;
 
       [hostImage, guestImage].forEach((image, index) => {
         const x = index === 0 ? leftX : rightX;
         ctx.save();
-        drawRoundedRect(x, photoY, photoWidth, photoHeight, 24);
+        drawRoundedRect(x, photoY, photoWidth, photoHeight, Math.max(16, radius * 0.7));
         ctx.clip();
         ctx.drawImage(image, x, photoY, photoWidth, photoHeight);
         ctx.restore();
@@ -276,11 +293,11 @@ export function LiveRoomStage() {
     ctx.fillStyle = "#a45b7b";
     ctx.font = "34px sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText("Download before leaving the room", canvas.width / 2, 2440);
+    ctx.fillText("Download before leaving the room", canvas.width / 2, canvas.height - 42);
 
     const dataUrl = canvas.toDataURL("image/png");
     setFinalStrip(dataUrl);
-    await advanceRoom(roomId, "complete", 4);
+    await advanceRoom(roomId, "complete", totalRounds);
   };
 
   const downloadStrip = () => {
@@ -312,6 +329,9 @@ export function LiveRoomStage() {
             <h2 className="mt-2 text-3xl font-semibold text-roseInk">{displayName} • {role}</h2>
             <p className="mt-2 text-sm text-rose-700/80">
               Partner: {partner?.joined ? `${partner.name} • ${partner.ready ? "Ready" : "Connected"}` : "Waiting"}
+            </p>
+            <p className="mt-1 text-xs uppercase tracking-[0.2em] text-rose-500">
+              Template: {activeTemplate.name} • {totalRounds} rounds
             </p>
           </div>
           <button className="button-secondary gap-2" onClick={copyInvite}>
@@ -356,7 +376,7 @@ export function LiveRoomStage() {
         <div className="panel p-5">
           <h3 className="text-lg font-semibold text-roseInk">Shared strip progress</h3>
           <div className="mt-4 grid gap-4">
-            {[1, 2, 3, 4].map((roundNumber) => {
+            {roundNumbers.map((roundNumber) => {
               const round = rounds[roundNumber];
               return (
                 <div key={roundNumber} className="rounded-[24px] border border-rose-100 bg-white/70 p-4">
@@ -399,7 +419,7 @@ export function LiveRoomStage() {
             </>
           ) : (
             <p className="mt-3 text-sm text-rose-700/80">
-              Complete all 4 rounds and the final strip will appear here for both people.
+              Complete all {totalRounds} rounds and the final strip will appear here for both people.
             </p>
           )}
         </div>

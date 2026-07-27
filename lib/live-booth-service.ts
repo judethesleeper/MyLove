@@ -12,6 +12,8 @@ import {
 } from "firebase/firestore";
 import { firestore } from "./firebase-client";
 import { LiveRole, type LiveRoom, type LiveRoundData } from "@/types/live-booth";
+import type { TemplateId } from "@/types/photobooth";
+import { getTemplate } from "./photobooth-utils";
 
 function roomRef(roomId: string) {
   return doc(firestore, "liveBoothRooms", roomId);
@@ -25,9 +27,12 @@ export function createRandomRoomId() {
   return `LOVE${Math.floor(1000 + Math.random() * 9000)}`;
 }
 
-export async function createLiveRoom(roomId: string, hostName: string) {
+export async function createLiveRoom(roomId: string, hostName: string, templateId: TemplateId) {
+  const template = getTemplate(templateId);
+
   await setDoc(roomRef(roomId), {
     roomId,
+    templateId,
     phase: "waiting",
     currentRound: 1,
     countdownStartsAt: null,
@@ -39,7 +44,7 @@ export async function createLiveRoom(roomId: string, hostName: string) {
     updatedAt: serverTimestamp()
   });
 
-  for (let round = 1; round <= 4; round += 1) {
+  for (let round = 1; round <= template.slots.length; round += 1) {
     await setDoc(roundRef(roomId, round), {
       round,
       hostImage: null,
