@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  @apply bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.85),_transparent_26%),linear-gradient(180deg,_#fff5fb_0%,_#ffe7f0_45%,_#fffaf6_100%)] text-roseInk;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(215, 86, 140, 0.55) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(215, 86, 140, 0.45);
+  border-radius: 999px;
+}
+
+.panel {
+  @apply rounded-[28px] border border-white/60 bg-white/70 shadow-dreamy backdrop-blur-xl;
+}
+
+.button-primary {
+  @apply inline-flex items-center justify-center rounded-full bg-gradient-to-r from-blush to-berry px-5 py-3 font-semibold text-white shadow-lg shadow-pink-300/40 transition hover:-translate-y-0.5;
+}
+
+.button-secondary {
+  @apply inline-flex items-center justify-center rounded-full border border-rose-200 bg-white/80 px-4 py-2.5 font-medium text-roseInk transition hover:-translate-y-0.5;
+}
+
+.input-base,
+.select-base,
+.textarea-base {
+  @apply w-full rounded-2xl border border-rose-200 bg-white/80 px-4 py-3 text-sm text-roseInk outline-none ring-0 transition focus:border-berry focus:shadow-sm;
+}

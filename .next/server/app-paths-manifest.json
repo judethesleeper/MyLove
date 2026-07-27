@@ -1,0 +1,7 @@
+{
+  "/page": "app/page.js",
+  "/live/room/page": "app/live/room/page.js",
+  "/live/page": "app/live/page.js",
+  "/camera/page": "app/camera/page.js",
+  "/editor/page": "app/editor/page.js"
+}
